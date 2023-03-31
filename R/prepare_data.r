@@ -12,7 +12,7 @@
 ##' @author Sebastian Funk
 prepare_data <- function(linelist,
                          pairs,
-                         gi = list(mean_mean = 9.2,
+                         si = list(mean_mean = 9.2,
                                    mean_sd = 1,
                                    sd_mean = 4.4,
                                    sd_sd = 1),
@@ -24,9 +24,9 @@ prepare_data <- function(linelist,
                                    mu_sd = 1,
                                    sigma_mean = log(2.5),
                                    sigma_sd = 1),
-                         max_ip = 26) {
+                         init = 21) {
 
-  names(gi) <- paste0("gi_", names(gi))
+  names(si) <- paste0("si_", names(si))
   names(od) <- paste0("od_", names(od))
   names(ip) <- paste0("ip_", names(ip))
 
@@ -34,10 +34,10 @@ prepare_data <- function(linelist,
 
   linelist <- linelist |>
     dplyr::mutate(
-      day_of_onset_of_symptoms = as.integer(date_of_onset_of_symptoms - t0),
-      day_of_outcome = as.integer(date_of_outcome - t0),
-      max_onset_of_symptoms = day_of_onset_of_symptoms + 1,
-      max_outcome = day_of_outcome + 1
+      lower_onset = as.integer(date_of_onset_of_symptoms - t0),
+      lower_outcome = as.integer(date_of_outcome - t0),
+      upper_onset = lower_onset + 1,
+      upper_outcome = lower_outcome + 1
     )
 
   t <- max(
@@ -46,17 +46,17 @@ prepare_data <- function(linelist,
 
   linelist <- linelist |>
     tidyr::replace_na(list(
-      day_of_onset_of_symptoms = 0,
-      day_of_outcome = 0,
-      max_outcome = t
+      lower_onset = 0,
+      lower_outcome = 0,
+      upper_outcome = t
     ))
 
   linelist <- linelist |>
     dplyr::mutate(
-      max_onset_of_symptoms = dplyr::if_else(
-        is.na(max_onset_of_symptoms),
-        max_outcome,
-        max_onset_of_symptoms
+      upper_onset = dplyr::if_else(
+        is.na(upper_onset),
+        upper_outcome,
+        upper_onset
       ))
 
   pairs <- as.matrix(pairs[, c("from", "to")])
@@ -68,15 +68,15 @@ prepare_data <- function(linelist,
     t = t,
     n_pairs = n_pairs,
     pairs = pairs,
-    day_onset = linelist$day_of_onset_of_symptoms,
-    max_onset = linelist$max_onset_of_symptoms,
-    day_outcome = linelist$day_of_outcome,
-    max_outcome = linelist$max_outcome,
+    lower_onset = linelist$lower_onset,
+    upper_onset = linelist$upper_onset,
+    lower_outcome = linelist$lower_outcome,
+    upper_outcome = linelist$upper_outcome,
     known_onset = as.integer(!is.na(linelist$date_of_onset_of_symptoms)),
     known_outcome = as.integer(!is.na(linelist$date_of_outcome))
   )
 
-  data <- c(data, gi, od, ip)
+  data <- c(data, si, od, ip)
 
   return(data)
 }

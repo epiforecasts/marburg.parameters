@@ -8,23 +8,18 @@
 prepare_init <- function(data) {
    init_fn <- function() {
      out <- list()
-     out$incubation_period <- array(
-       rep(data$ip_mu_mean, data$N)
-     )
-     out$time_infection <- array(runif(
+     out$time_onset <- array(runif(
        data$N,
-       pmax(data$day_onset - out$incubation_period, 0),
-       data$max_onset - out$incubation_period
+       data$lower_onset,
+       data$upper_onset
      ))
      out$onset_to_death <- array(runif(
        data$N,
-       pmax(data$day_outcome - out$time_infection - out$incubation_period, 0),
-       data$max_outcome - out$time_infection - out$incubation_period
+       pmax(data$lower_outcome - out$time_onset, 0),
+       data$upper_outcome - out$time_onset
      ))
-     out$gi_mean <- data$gi_mean_mean
-     out$gi_sd <- data$gi_sd_mean
-     out$ip_mu <- data$ip_mu_mean
-     out$ip_sigma <- data$ip_sigma_mean
+     out$si_mean <- data$si_mean_mean
+     out$si_sd <- data$si_sd_mean
      out$od_mu <- data$od_mu_mean
      out$od_sigma <- data$od_sigma_mean
      return(out)
