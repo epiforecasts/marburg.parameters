@@ -1,0 +1,137 @@
+---
+title: Estimating epidemiological parameters of Marburg disease in Equatorial Guinea
+output: github_document
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 7
+)
+```
+
+# Summary
+
+Initial exploration of serial intervals and distribution from onset to death for Marburg disease in Equatorial Guinea, using data from a published report.
+
+```{r init, include = FALSE}
+library("marburg")
+library("googlesheets4")
+library("dplyr")
+library("janitor")
+library("cmdstanr")
+library("posterior")
+library("tidyr")
+library("ggplot2")
+library("lubridate")
+library("here")
+
+linelist <- googlesheets4::read_sheet(
+  paste0("https://docs.google.com/spreadsheets/d/1iviEt9eZCPDNjMSEqIfLXl0W2LlHXrt93Z6FI_1seAM/edit#gid=0"), ## nolint
+  n_max = 31) |>
+  janitor::clean_names()
+
+wiw <- googlesheets4::read_sheet(
+  paste0("https://docs.google.com/spreadsheets/d/1iviEt9eZCPDNjMSEqIfLXl0W2LlHXrt93Z6FI_1seAM/edit#gid=0"), ## nolint
+  sheet = "Who_Infected_Who",
+  n_max = 14) |>
+  janitor::clean_names()
+
+linelist <- linelist |>
+  dplyr::rowwise() |>
+  dplyr::mutate(
+    date_of_onset_of_symptoms =
+      lubridate::ymd(as.character(unlist(date_of_onset_of_symptoms))),
+    date_of_outcome = lubridate::ymd(as.character(unlist(date_of_outcome))),
+  ) |>
+  dplyr::ungroup()
+
+wiw <- wiw |>
+  mutate(
+    from = as.integer(sub("^ID", "", from)),
+    to = as.integer(sub("^ID", "", to))
+  )
+```
+
+```{r run_model, include = FALSE}
+model <- cmdstanr::cmdstan_model(here::here("inst/stan/model.stan"))
+
+data <- marburg::prepare_data(linelist, wiw, init = 21)
+t0 <- min(linelist$date_of_onset_of_symptoms, na.rm = TRUE) - 21
+
+init <- marburg::prepare_init(data)
+
+fit <- model$sample(
+  data = data,
+  init = init,
+  chains = 2,
+  parallel_chains = 2,
+  adapt_delta = 0.99
+)
+
+draws <- fit$draws() |>
+  posterior::as_draws_df() |>
+  tidyr::pivot_longer(c(-.chain, -.iteration, -.draw))
+
+epicurve <- draws |>
+  dplyr::filter(grepl("^time_onset", name)) |>
+  tidyr::separate(name, c("name", "index"), sep = "\\[") |>
+  dplyr::mutate(
+    index = as.integer(sub("\\]", "", index)),
+    day = as.integer(value)
+  ) |>
+  dplyr::group_by(.draw, day) |>
+  dplyr::summarise(cases = n(), .groups = "drop") |>
+  dplyr::group_by(.draw) |>
+  tidyr::complete(day = seq_len(max(day))) |>
+  dplyr::ungroup() |>
+  tidyr::replace_na(list(cases = 0)) |>
+  dplyr::mutate(
+    date = t0 + day,
+    week = lubridate::floor_date(date, unit = "week", week_start = 1)
+  ) |>
+  dplyr::group_by(.draw, week) |>
+  dplyr::summarise(
+    cases = sum(cases),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  dplyr::filter(n == 7)
+```
+
+# Estimated curve of symptom onsets
+
+```{r}
+p <- ggplot2::ggplot(epicurve,
+  ggplot2::aes(x = week, y = cases, group = .draw)) +
+  ggplot2::geom_line(alpha = 0.2) +
+  ggplot2::theme_bw()
+print(p)
+```
+
+# Estimated curve of symptom onsets
+
+```{r}
+si_mean <-draws |>
+  dplyr::filter(name == "si_mean")
+
+p <- ggplot2::ggplot(si_mean, ggplot2::aes(x = value)) +
+  ggplot2::geom_histogram(binwidth = 1) +
+  ggplot2::theme_bw()
+print(p)
+```
+
+# Estimated distribution from onset to death
+
+```{r}
+od_mu <- draws |>
+  dplyr::filter(name == "od_mu") |>
+  dplyr::mutate(value = exp(value))
+
+p <- ggplot2::ggplot(od_mu, ggplot2::aes(x = value)) +
+  ggplot2::geom_histogram(binwidth = 1) +
+  ggplot2::theme_bw()
+print(p)
+```
