@@ -26,7 +26,7 @@ library("tidyr")
 library("ggplot2")
 library("lubridate")
 library("here")
-library("kable")
+library("knitr")
 devtools::load_all(here::here())
 
 linelist <- googlesheets4::read_sheet(
@@ -40,12 +40,17 @@ wiw <- googlesheets4::read_sheet(
   n_max = 14) |>
   janitor::clean_names()
 
+null_death <- which(vapply(linelist$date_death, is.null, FALSE))
+linelist[null_death, ]$date_death <-
+  lapply(null_death, function(x) "NA")
+
 linelist <- linelist |>
   dplyr::rowwise() |>
   dplyr::mutate(
-    date_of_onset_of_symptoms =
-      lubridate::ymd(as.character(unlist(date_of_onset_of_symptoms))),
-    date_of_outcome = lubridate::ymd(as.character(unlist(date_of_outcome))),
+    date_onset =
+      lubridate::ymd(as.character(unlist(date_onset))),
+    date_death =
+      lubridate::ymd(as.character(unlist(date_death))),
   ) |>
   dplyr::ungroup()
 
@@ -60,7 +65,7 @@ wiw <- wiw |>
 model <- cmdstanr::cmdstan_model(here::here("inst/stan/model.stan"))
 
 data <- marburg::prepare_data(linelist, wiw, init = 21)
-t0 <- min(linelist$date_of_onset_of_symptoms, na.rm = TRUE) - 21
+t0 <- min(linelist$date_onset, na.rm = TRUE) - 21
 
 init <- marburg::prepare_init(data)
 
@@ -81,7 +86,7 @@ summary <- fit$summary()
 
 # Parameters of estimated distributions
 
-**These results have been derived without a full understanding of the data collection process and therefore need to be treated with caution. *
+**These results have been derived without a full understanding of the data collection process and therefore need to be treated with caution.**
 
 Serial intervals were estimated as a gamma distribution and the onset-to-death distribution as a lognormal distribution, accounting for daily censoring and right truncation.
 

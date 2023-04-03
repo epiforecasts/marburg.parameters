@@ -30,12 +30,12 @@ prepare_data <- function(linelist,
   names(od) <- paste0("od_", names(od))
   names(ip) <- paste0("ip_", names(ip))
 
-  t0 <- min(linelist$date_of_onset_of_symptoms, na.rm = TRUE) - init
+  t0 <- min(linelist$date_onset, na.rm = TRUE) - init
 
   linelist <- linelist |>
     dplyr::mutate(
-      lower_onset = as.integer(date_of_onset_of_symptoms - t0),
-      lower_outcome = as.integer(date_of_outcome - t0),
+      lower_onset = as.integer(date_onset - t0),
+      lower_outcome = as.integer(date_death - t0),
       upper_onset = lower_onset + 1,
       upper_outcome = lower_outcome + 1
     )
@@ -72,8 +72,8 @@ prepare_data <- function(linelist,
     upper_onset = linelist$upper_onset,
     lower_outcome = linelist$lower_outcome,
     upper_outcome = linelist$upper_outcome,
-    known_onset = as.integer(!is.na(linelist$date_of_onset_of_symptoms)),
-    known_outcome = as.integer(!is.na(linelist$date_of_outcome))
+    known_onset = as.integer(!is.na(linelist$date_onset)),
+    known_outcome = as.integer(!is.na(linelist$date_death))
   )
 
   data <- c(data, si, od, ip)
