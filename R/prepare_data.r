@@ -30,7 +30,7 @@ prepare_data <- function(linelist,
   names(od) <- paste0("od_", names(od))
   names(ip) <- paste0("ip_", names(ip))
 
-  t0 <- min(linelist$date_of_onset_of_symptoms, na.rm = TRUE) - max_ip
+  t0 <- min(linelist$date_of_onset_of_symptoms, na.rm = TRUE) - init
 
   linelist <- linelist |>
     dplyr::mutate(
@@ -41,7 +41,7 @@ prepare_data <- function(linelist,
     )
 
   t <- max(
-    c(linelist$day_of_onset_of_symptoms, linelist$day_of_outcome), na.rm = TRUE
+    c(linelist$lower_onset, linelist$lower_outcome), na.rm = TRUE
   ) + 1
 
   linelist <- linelist |>

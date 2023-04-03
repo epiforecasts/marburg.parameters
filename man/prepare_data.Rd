@@ -7,10 +7,10 @@
 prepare_data(
   linelist,
   pairs,
-  gi = list(mean_mean = 9.2, mean_sd = 1, sd_mean = 4.4, sd_sd = 1),
+  si = list(mean_mean = 9.2, mean_sd = 1, sd_mean = 4.4, sd_sd = 1),
   od = list(mu_mean = log(8.5), mu_sd = 1, sigma_mean = log(2.5), sigma_sd = 1),
   ip = list(mu_mean = log(7), mu_sd = 1, sigma_mean = log(2.5), sigma_sd = 1),
-  max_ip = 26
+  init = 21
 )
 }
 \arguments{
@@ -18,11 +18,11 @@ prepare_data(
 
 \item{pairs}{a pairs data frame}
 
-\item{gi}{generation interval parameters}
-
 \item{od}{onset-to-death parameters}
 
 \item{ip}{incubation period parameters}
+
+\item{gi}{generation interval parameters}
 
 \item{max_ip}{maximum possible incubation period}
 }

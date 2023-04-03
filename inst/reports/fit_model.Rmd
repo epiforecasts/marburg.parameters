@@ -14,10 +14,9 @@ knitr::opts_chunk$set(
 
 # Summary
 
-Initial exploration of serial intervals and distribution from onset to death for Marburg disease in Equatorial Guinea, using data from a published report.
+Initial exploration of serial intervals and distribution from onset to death for Marburg disease in Equatorial Guinea, using data from a [published report](https://www.guineasalud.org/archivos/Ordenes/Comunicado3.pdf).
 
 ```{r init, include = FALSE}
-library("marburg")
 library("googlesheets4")
 library("dplyr")
 library("janitor")
@@ -27,6 +26,8 @@ library("tidyr")
 library("ggplot2")
 library("lubridate")
 library("here")
+library("kable")
+devtools::load_all(here::here())
 
 linelist <- googlesheets4::read_sheet(
   paste0("https://docs.google.com/spreadsheets/d/1iviEt9eZCPDNjMSEqIfLXl0W2LlHXrt93Z6FI_1seAM/edit#gid=0"), ## nolint
@@ -74,7 +75,40 @@ fit <- model$sample(
 draws <- fit$draws() |>
   posterior::as_draws_df() |>
   tidyr::pivot_longer(c(-.chain, -.iteration, -.draw))
+  
+summary <- fit$summary()
+```
 
+# Parameters of estimated distributions
+
+**These results have been derived without a full understanding of the data collection process and therefore need to be treated with caution. *
+
+Serial intervals were estimated as a gamma distribution and the onset-to-death distribution as a lognormal distribution, accounting for daily censoring and right truncation.
+
+```{r summaries, include = FALSE}
+estimate <- list()
+estimate[["Serial interval (mean)"]] <- summary |>
+  dplyr::filter(variable == "si_mean")
+estimate[["Serial interval (standard deviation)"]] <- summary |>
+  dplyr::filter(variable == "si_sd")
+estimate[["Delay from onset to death (median)"]] <- summary |>
+  dplyr::filter(variable == "od_median")
+estimate[["Delay from onset to death (standard deviation)"]] <- summary |>
+  dplyr::filter(variable == "od_sd")
+estimate <- estimate |>
+  dplyr::bind_rows(.id = "Parameter") |>
+  dplyr::mutate(
+    Estimate = paste0(round(mean), " days (95% CI: ", round(q5), " -- ", round(q95), ")")
+  )
+estimate |>
+  dplyr::select(Parameter, Estimate) |>
+  knitr::kable()
+```
+
+
+# Estimated curve of symptom onsets
+
+```{r epicurve, include = FALSE}
 epicurve <- draws |>
   dplyr::filter(grepl("^time_onset", name)) |>
   tidyr::separate(name, c("name", "index"), sep = "\\[") |>
@@ -99,39 +133,12 @@ epicurve <- draws |>
     .groups = "drop"
   ) |>
   dplyr::filter(n == 7)
-```
 
-# Estimated curve of symptom onsets
-
-```{r}
 p <- ggplot2::ggplot(epicurve,
   ggplot2::aes(x = week, y = cases, group = .draw)) +
   ggplot2::geom_line(alpha = 0.2) +
-  ggplot2::theme_bw()
-print(p)
-```
-
-# Estimated curve of symptom onsets
-
-```{r}
-si_mean <-draws |>
-  dplyr::filter(name == "si_mean")
-
-p <- ggplot2::ggplot(si_mean, ggplot2::aes(x = value)) +
-  ggplot2::geom_histogram(binwidth = 1) +
-  ggplot2::theme_bw()
-print(p)
-```
-
-# Estimated distribution from onset to death
-
-```{r}
-od_mu <- draws |>
-  dplyr::filter(name == "od_mu") |>
-  dplyr::mutate(value = exp(value))
-
-p <- ggplot2::ggplot(od_mu, ggplot2::aes(x = value)) +
-  ggplot2::geom_histogram(binwidth = 1) +
-  ggplot2::theme_bw()
+  ggplot2::theme_bw() +
+  ggplot2::xlab("Week (final day)") +
+  ggplot2::ylab("Estimated number of cases")
 print(p)
 ```

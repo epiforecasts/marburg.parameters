@@ -54,3 +54,8 @@ model {
     target += gamma_lpdf(abs(time_onset[pairs[i, 1]] - time_onset[pairs[i, 2]]) | si_alpha, si_beta);
   }
 }
+
+generated quantities {
+  real od_median = exp(od_mu);
+  real od_sd = sqrt((exp(pow(od_sigma, 2)) - 1) * exp(2 * od_mu + pow(od_sigma, 2)));
+}
