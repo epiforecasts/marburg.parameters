@@ -1,5 +1,7 @@
 ---
 title: Estimating epidemiological parameters of Marburg disease in Equatorial Guinea
+author: Sebastian Funk
+date: 31 March, 2023
 output: github_document
 ---
 
@@ -11,10 +13,6 @@ knitr::opts_chunk$set(
   fig.height = 7
 )
 ```
-
-# Summary
-
-Initial exploration of serial intervals and distribution from onset to death for Marburg disease in Equatorial Guinea, using data from a [published report](https://www.guineasalud.org/archivos/Ordenes/Comunicado3.pdf).
 
 ```{r init, include = FALSE}
 library("googlesheets4")
@@ -61,6 +59,10 @@ wiw <- wiw |>
   )
 ```
 
+# Summary
+
+Initial exploration of serial intervals and distribution from onset to death for Marburg disease in Equatorial Guinea, using data from a [published report](https://www.guineasalud.org/archivos/Ordenes/Comunicado3.pdf).
+
 ```{r run_model, include = FALSE}
 model <- cmdstanr::cmdstan_model(here::here("inst/stan/model.stan"))
 
@@ -84,13 +86,18 @@ draws <- fit$draws() |>
 summary <- fit$summary()
 ```
 
+# Model description
+
+We estimate times of onset and death for all `nrow(linelist)` reported cases. We further estimate the parameters of the onset-to-death distribution, and the serial interval from `nrow(wiw)` established transmission pairs.
+
+We modelled serial intervals as strictly non-negative and drawn from a gamma distribution with parameters estimated from the data. We modelled the onset-to-death distribution as drawn from a lognormal distribution with parameters estimated from the data. In obtaining the parameters we accounted for daily censoring and truncation at the end of the observation period.
+
+
 # Parameters of estimated distributions
 
 **These results have been derived without a full understanding of the data collection process and therefore need to be treated with caution.**
 
-Serial intervals were estimated as a gamma distribution and the onset-to-death distribution as a lognormal distribution, accounting for daily censoring and right truncation.
-
-```{r summaries, include = FALSE}
+```{r summaries, echo = FALSE}
 estimate <- list()
 estimate[["Serial interval (mean)"]] <- summary |>
   dplyr::filter(variable == "si_mean")
@@ -113,7 +120,7 @@ estimate |>
 
 # Estimated curve of symptom onsets
 
-```{r epicurve, include = FALSE}
+```{r epicurve, echo = FALSE}
 epicurve <- draws |>
   dplyr::filter(grepl("^time_onset", name)) |>
   tidyr::separate(name, c("name", "index"), sep = "\\[") |>

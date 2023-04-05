@@ -35,27 +35,27 @@ prepare_data <- function(linelist,
   linelist <- linelist |>
     dplyr::mutate(
       lower_onset = as.integer(date_onset - t0),
-      lower_outcome = as.integer(date_death - t0),
+      lower_death = as.integer(date_death - t0),
       upper_onset = lower_onset + 1,
-      upper_outcome = lower_outcome + 1
+      upper_death = lower_death + 1
     )
 
   t <- max(
-    c(linelist$lower_onset, linelist$lower_outcome), na.rm = TRUE
+    c(linelist$lower_onset, linelist$lower_death), na.rm = TRUE
   ) + 1
 
   linelist <- linelist |>
     tidyr::replace_na(list(
       lower_onset = 0,
-      lower_outcome = 0,
-      upper_outcome = t
+      lower_death = 0,
+      upper_death = t
     ))
 
   linelist <- linelist |>
     dplyr::mutate(
       upper_onset = dplyr::if_else(
         is.na(upper_onset),
-        upper_outcome,
+        upper_death,
         upper_onset
       ))
 
@@ -70,10 +70,10 @@ prepare_data <- function(linelist,
     pairs = pairs,
     lower_onset = linelist$lower_onset,
     upper_onset = linelist$upper_onset,
-    lower_outcome = linelist$lower_outcome,
-    upper_outcome = linelist$upper_outcome,
+    lower_death = linelist$lower_death,
+    upper_death = linelist$upper_death,
     known_onset = as.integer(!is.na(linelist$date_onset)),
-    known_outcome = as.integer(!is.na(linelist$date_death))
+    known_death = as.integer(!is.na(linelist$date_death))
   )
 
   data <- c(data, si, od, ip)

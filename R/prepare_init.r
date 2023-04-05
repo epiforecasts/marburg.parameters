@@ -13,10 +13,10 @@ prepare_init <- function(data) {
        data$lower_onset,
        data$upper_onset
      ))
-     out$onset_to_death <- array(runif(
+     out$time_death <- array(runif(
        data$N,
-       pmax(data$lower_outcome - out$time_onset, 0),
-       data$upper_outcome - out$time_onset
+       data$lower_death,
+       data$upper_death
      ))
      out$si_mean <- data$si_mean_mean
      out$si_sd <- data$si_sd_mean
