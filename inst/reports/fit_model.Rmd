@@ -88,7 +88,7 @@ summary <- fit$summary()
 
 # Model description
 
-We estimate times of onset and death for all `r nrow(linelist)` reported cases. We further estimate the parameters of the onset-to-death distribution, and the serial interval from `r nrow(wiw)` established transmission pairs.
+We estimated times of onset and death for all `r nrow(linelist)` reported cases. We further estimated the parameters of the onset-to-death distribution, and the serial interval from `r nrow(wiw)` established transmission pairs.
 
 We modelled serial intervals as strictly non-negative and drawn from a gamma distribution with parameters estimated from the data. We modelled the onset-to-death distribution as drawn from a lognormal distribution with parameters estimated from the data. In obtaining the parameters we accounted for daily censoring and truncation at the end of the observation period.
 

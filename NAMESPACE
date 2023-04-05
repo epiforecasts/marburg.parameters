@@ -3,3 +3,4 @@
 export(prepare_data)
 export(prepare_init)
 importFrom(dplyr,mutate)
+importFrom(tidyr,fill)

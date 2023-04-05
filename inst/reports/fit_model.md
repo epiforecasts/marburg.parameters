@@ -13,8 +13,8 @@ report](https://www.guineasalud.org/archivos/Ordenes/Comunicado3.pdf).
 
 # Model description
 
-We estimate times of onset and death for all 31 reported cases. We
-further estimate the parameters of the onset-to-death distribution, and
+We estimated times of onset and death for all 31 reported cases. We
+further estimated the parameters of the onset-to-death distribution, and
 the serial interval from 14 established transmission pairs.
 
 We modelled serial intervals as strictly non-negative and drawn from a
@@ -34,7 +34,7 @@ data collection process and therefore need to be treated with caution.**
 | Serial interval (mean)                         | 10 days (95% CI: 9 – 12) |
 | Serial interval (standard deviation)           | 5 days (95% CI: 4 – 6)   |
 | Delay from onset to death (median)             | 6 days (95% CI: 4 – 8)   |
-| Delay from onset to death (standard deviation) | 9 days (95% CI: 4 – 18)  |
+| Delay from onset to death (standard deviation) | 9 days (95% CI: 4 – 20)  |
 
 # Estimated curve of symptom onsets
 

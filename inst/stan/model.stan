@@ -8,6 +8,7 @@ data {
   array[N] real<lower = 0> lower_death; // lower bound on time of death 
   array[N] real <lower = 1> upper_onset; // upper bound on time of onset
   array[N] real <lower = 1> upper_death; // upper bound on time of death
+  array[N] real <lower = 1> obs_end; // observation end times
   array[N] int<lower = 0, upper = 1> known_onset; // known day of onset
   array[N] int<lower = 0, upper = 1> known_death; // known day of outcome
 
@@ -49,11 +50,13 @@ model {
 
   for (i in 1:N) {
     if (known_death[i]) {
-      target += lognormal_lpdf(time_death[i] - time_onset[i] | od_mu, od_sigma);
+      target += lognormal_lpdf(time_death[i] - time_onset[i] | od_mu, od_sigma) -
+        lognormal_lcdf(obs_end[i] - time_onset[i] | od_mu, od_sigma);
     }
   }
   for (i in 1:n_pairs) {
-    target += gamma_lpdf(abs(time_onset[pairs[i, 1]] - time_onset[pairs[i, 2]]) | si_alpha, si_beta);
+    target += gamma_lpdf(abs(time_onset[pairs[i, 1]] - time_onset[pairs[i, 2]]) | si_alpha, si_beta) -
+      gamma_lcdf(abs(obs_end[i] - time_onset[pairs[i, 2]]) | si_alpha, si_beta);
   }
 }
 

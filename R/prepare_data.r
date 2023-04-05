@@ -7,6 +7,7 @@
 ##' @param ip incubation period parameters
 ##' @param max_ip maximum possible incubation period
 ##' @importFrom dplyr mutate
+##' @importFrom tidyr fill
 ##' @return a list ready for stan
 ##' @export
 ##' @author Sebastian Funk
@@ -33,11 +34,13 @@ prepare_data <- function(linelist,
   t0 <- min(linelist$date_onset, na.rm = TRUE) - init
 
   linelist <- linelist |>
+    tidyr::fill(data_up_to) |>
     dplyr::mutate(
       lower_onset = as.integer(date_onset - t0),
       lower_death = as.integer(date_death - t0),
       upper_onset = lower_onset + 1,
-      upper_death = lower_death + 1
+      upper_death = lower_death + 1,
+      obs_end = as.integer(data_up_to - t0)
     )
 
   t <- max(
@@ -72,6 +75,7 @@ prepare_data <- function(linelist,
     upper_onset = linelist$upper_onset,
     lower_death = linelist$lower_death,
     upper_death = linelist$upper_death,
+    obs_end = linelist$obs_end,
     known_onset = as.integer(!is.na(linelist$date_onset)),
     known_death = as.integer(!is.na(linelist$date_death))
   )
